@@ -1,0 +1,66 @@
+[
+  {
+    "speaker": "独白",
+    "voice": "girl_young",
+    "text": "你想退婚，不过是觉得我萧炎一介废物，配不上你这天之骄子。",
+    "instruction": "压抑着怒意，声音压低，每个字都咬得很重",
+    "seed": 7,
+    "cfg": 2.2
+  },
+  {
+    "speaker": "独白",
+    "voice": "girl_young",
+    "text": "若非这纸婚约，本姑娘根本瞧不上你半分。",
+    "instruction": "高傲冷冽，语气不屑，尾音轻轻上扬",
+    "seed": 7,
+    "cfg": 2.4
+  },
+  {
+    "speaker": "独白",
+    "voice": "girl_young",
+    "text": "云岚宗是很强，可我还年轻，有的是时间。",
+    "instruction": "倔强笃定，不慌不忙，带着一点冷笑",
+    "seed": 7,
+    "cfg": 2.0
+  },
+  {
+    "speaker": "独白",
+    "voice": "girl_young",
+    "text": "没错，现在的我，的确是废物。",
+    "instruction": "低声自嘲，语速很慢，像在忍着什么",
+    "seed": 7,
+    "cfg": 2.0
+  },
+  {
+    "speaker": "独白",
+    "voice": "girl_young",
+    "text": "可在日后的岁月里，你凭什么认定，我一个女子不能翻身？",
+    "instruction": "情绪陡然扬起，质问，声音发颤但很硬",
+    "seed": 7,
+    "cfg": 2.4
+  },
+  {
+    "speaker": "独白",
+    "voice": "girl_young",
+    "text": "纳兰公子，看在纳兰老爷子的面子上，萧炎奉劝你几句话。",
+    "instruction": "语气从容克制，平静得有些冷",
+    "seed": 7,
+    "cfg": 2.2
+  },
+  {
+    "speaker": "独白",
+    "voice": "girl_young",
+    "text": "三十年河东，三十年河西，莫欺少女穷！",
+    "instruction": "情绪彻底爆发，一字一顿，掷地有声",
+    "seed": 7,
+    "cfg": 2.6
+  },
+  {
+    "speaker": "独白",
+    "voice": "girl_young",
+    "text": "纳兰嫣然，你看清楚。这不是你退我的婚约，是我萧炎，休了你。",
+    "instruction": "冷硬决绝，说得很慢很稳，不带一丝起伏",
+    "seed": 7,
+    "cfg": 2.4
+  }
+]

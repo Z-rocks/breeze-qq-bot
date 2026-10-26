@@ -1,0 +1,34 @@
+# ---- 模型权重（3.3 GB，自行下载，见 README）----
+models/*.gguf
+models/*.bin
+
+# ---- 推理程序与协议端（二进制，自行安装）----
+bin/breeze-cli.exe
+bin/napcat/
+bin/snowluma/
+
+# ---- 调研残留 ----
+vendor/
+
+# ---- 生成物 ----
+outputs/*.wav
+outputs/*.log
+outputs/_dub/
+outputs/_tmp*
+
+# ---- 个人数据（含聊天记录，绝不能提交）----
+.workbuddy-ai/
+qq_mcp/memory.db
+qq_mcp/memory.db-journal
+qq_mcp/memory.db-wal
+qq_mcp/memory.db-shm
+voices/*.breeze
+voices/*.json
+
+# ---- 临时 ----
+__pycache__/
+*.py[cod]
+*.bak-*
+*.tmp
+.DS_Store
+Thumbs.db

@@ -1,0 +1,64 @@
+# NOTICE — 第三方组件与许可
+
+本仓库的**源代码**采用 MIT 许可（见 LICENSE）。但项目运行依赖以下第三方组件，
+它们各自遵循不同的许可条款，**不适用 MIT**。
+
+---
+
+## 1. Breeze TTS 2 模型权重 ⚠️ 最重要
+
+- 来源：<https://huggingface.co/BreezeBlue/Breeze-TTS-2>
+- 许可：**BreezeBlue Research and Non-Commercial License**
+- 文件：`models/breeze-tts-2-q8_0.gguf`
+
+**该权重、其衍生模型、以及自托管产生的输出，仅限研究与非商业用途。**
+
+这意味着：即使本项目代码是 MIT，你用这套东西生成的语音也**不能商用**。
+商用需要走 BreezeBlue 官方托管平台（breezeblue.ai）的付费订阅，且该订阅
+**不授予**开源权重本身的商用权利。
+
+---
+
+## 2. Breeze-TTS-2.cpp 推理实现
+
+- 来源：<https://github.com/HoppouAI/Breeze-TTS-2.cpp>
+- 许可：**Apache License 2.0**
+- 文件：`bin/breeze-cli.exe`（预编译二进制）
+
+GGUF 转换不改变模型权重的许可，仅转换格式不构成重新授权。
+
+---
+
+## 3. NapCat（QQ 协议端）
+
+- 来源：<https://github.com/NapNeko/NapCatQQ>
+- 许可：遵循其仓库自带许可
+- 文件：`bin/napcat/`
+
+**使用前请自行阅读其许可条款与《QQ 用户协议》。**
+
+NapCat 通过注入方式接管 QQ 客户端，属于第三方非官方方案，**存在账号被限制的风险**。
+本项目仅通过标准 OneBot 11 接口与之通信，不包含也不分发其注入组件以外的任何修改。
+
+---
+
+## 4. 其他依赖
+
+| 组件 | 用途 | 许可 |
+| --- | --- | --- |
+| Python 标准库 | 全部逻辑实现 | PSF License |
+| SQLite | 记忆库存储 | Public Domain |
+| Model Context Protocol | 工具协议 | MIT |
+
+本项目**不依赖任何需要单独安装的 Python 第三方包**，全部使用标准库。
+
+---
+
+## 5. 使用者的责任
+
+- 克隆他人声音前，必须取得声音所有者的明确授权
+- 不得用于冒充、诈骗、骚扰或其他违法用途
+- 遵守所在地区关于深度合成、AI 生成内容标识的相关法规
+- 自行承担使用第三方协议端带来的账号风险
+
+本项目作者不对上述使用行为承担任何责任。
