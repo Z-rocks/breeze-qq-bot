@@ -42,6 +42,12 @@ CREATE TABLE IF NOT EXISTS facts (
     updated_at INTEGER NOT NULL,
     UNIQUE(scope, key)
 );
+
+-- 事件级去重：同一条消息只处理一次。QQ 会重推事件，没有这张表会重复回复。
+CREATE TABLE IF NOT EXISTS seen (
+    key TEXT PRIMARY KEY,
+    ts  INTEGER NOT NULL
+);
 """
 
 
@@ -143,6 +149,35 @@ def stats() -> dict:
         fa = conn.execute("SELECT COUNT(*) c FROM facts").fetchone()["c"]
         se = conn.execute("SELECT COUNT(DISTINCT session) c FROM episodes").fetchone()["c"]
     return {"episodes": ep, "facts": fa, "sessions": se, "db": str(DB_PATH)}
+
+
+# ---------------------------------------------------------------- 事件去重
+def mark_seen(key: str) -> bool:
+    """标记事件已处理。返回 True 表示是新的（首次见到），False 表示重复。
+
+    QQ 会重推事件，不挡就会重复回复。用 INSERT OR IGNORE 的 rowcount 判断，
+    一条 SQL 完成「查+写」，没有竞态窗口。
+    """
+    if not key:
+        return True
+    with _conn() as conn:
+        cur = conn.execute("INSERT OR IGNORE INTO seen(key, ts) VALUES(?, ?)",
+                           (str(key), int(time.time())))
+        return cur.rowcount == 1
+
+
+def prune_seen(days: int = 7) -> int:
+    """清理过期去重记录，避免无限增长。"""
+    cutoff = int(time.time()) - days * 86400
+    with _conn() as conn:
+        cur = conn.execute("DELETE FROM seen WHERE ts < ?", (cutoff,))
+        return cur.rowcount
+
+
+def seen_stats() -> dict:
+    with _conn() as conn:
+        total = conn.execute("SELECT COUNT(*) c FROM seen").fetchone()["c"]
+    return {"seen": total}
 
 
 if __name__ == "__main__":

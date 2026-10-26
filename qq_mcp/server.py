@@ -145,6 +145,10 @@ def sync_history(target_type: str, target_id: str | int, count: int = 20) -> tup
     me = bot_uin()
     added = 0
     for m in data.get("messages") or []:
+        mid = str(m.get("message_id") or "")
+        # 事件级去重：QQ 会重推，处理过的直接跳过
+        if mid and not memory.mark_seen(f"{session}:{mid}"):
+            continue
         sender = m.get("sender") or {}
         uid = str(sender.get("user_id") or "")
         name = sender.get("card") or sender.get("nickname") or uid
@@ -155,7 +159,7 @@ def sync_history(target_type: str, target_id: str | int, count: int = 20) -> tup
         )
         ok = memory.log_message(
             session,
-            msg_id=str(m.get("message_id")),
+            msg_id=mid or None,
             speaker_id=uid,
             speaker=name,
             role="bot" if uid == me else "user",

@@ -72,6 +72,8 @@ Breeze/
 ├─ 启动.bat                 一键启动入口
 ├─ start.py                 预检 + 启动 + 状态面板
 ├─ botctl.py                控制面：status / pause / resume / reload / logs
+├─ console.py               本地控制台（:3100 单页）
+├─ watchdog.py              NapCat 守护，掉线自动拉起
 ├─ tts.py                   语音合成命令行封装
 ├─ qq_mcp/                  MCP 服务器
 │  ├─ server.py             9 个工具：上下文/人设/记忆/收发
@@ -82,7 +84,8 @@ Breeze/
 │  ├─ persona.json          人设 + 声音 + 策略配置
 │  └─ memory.db             记忆数据
 ├─ scripts/
-│  ├─ test_v020.py          回归测试（26 项）
+│  ├─ test_v020.py          回归测试：白名单/脱敏/急停/锁（26 项）
+│  ├─ test_v030.py          回归测试：去重/控制台（16 项）
 │  ├─ send_qq_voice.py      应急手动发送
 │  ├─ dub_dialog.py         多角色配音拼接
 │  ├─ mock_onebot.py        假的 OneBot 服务端
@@ -108,6 +111,28 @@ python botctl.py logs 50         # NapCat 日志尾部
 ```
 
 **暂停是真的暂停**——`qq_send_text` / `qq_send_voice` 发送前会检查状态，命中就抛错，一条都发不出去。
+
+### 图形控制台
+
+```bash
+python console.py                # 打开 http://127.0.0.1:3100
+```
+
+一页看完：状态灯（运行 / QQ 登录 / 合成队列 / 记忆条数）、暂停开关、最近 20 条消息、最近错误。
+3 秒自动刷新，只绑 `127.0.0.1`。
+
+展示的消息会遮掉手机号/身份证——**控制台可能被截图，别让它变成新的泄露源**。
+
+### 进程守护
+
+```bash
+python watchdog.py               # 常驻，15 秒探一次
+python watchdog.py --once        # 只检查一次
+```
+
+健康判断是「端口开着 **且** OneBot 有响应」——只看端口会被半死状态骗过去。
+连续 2 次失败才重启，重启失败退避翻倍（30s → 60 → 120 → 封顶 5 分钟）。
+日志在 `outputs/watchdog.log`。
 
 ### 安全机制
 
