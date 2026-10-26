@@ -71,23 +71,60 @@ python start.py
 Breeze/
 ├─ 启动.bat                 一键启动入口
 ├─ start.py                 预检 + 启动 + 状态面板
+├─ botctl.py                控制面：status / pause / resume / reload / logs
 ├─ tts.py                   语音合成命令行封装
 ├─ qq_mcp/                  MCP 服务器
 │  ├─ server.py             9 个工具：上下文/人设/记忆/收发
+│  ├─ guard.py              白名单 + 急停 + 频率
+│  ├─ privacy.py            入站脱敏 + 出站审查
+│  ├─ lock.py               TTS 串行锁
 │  ├─ memory.py             SQLite 记忆库（情景 + 事实）
-│  ├─ persona.json          人设 + 声音配置
+│  ├─ persona.json          人设 + 声音 + 策略配置
 │  └─ memory.db             记忆数据
 ├─ scripts/
-│  ├─ send_qq_voice.py      应急手动发送（自己启 NapCat 再发）
+│  ├─ test_v020.py          回归测试（26 项）
+│  ├─ send_qq_voice.py      应急手动发送
 │  ├─ dub_dialog.py         多角色配音拼接
-│  ├─ mock_onebot.py        假的 OneBot 服务端，用来测链路
+│  ├─ mock_onebot.py        假的 OneBot 服务端
+│  ├─ publish.py            发布到 GitHub / Gitee
 │  └─ dl.py                 多线程下载器
 ├─ docs/ARCHITECTURE.md     架构设计（分层/契约/安全/演进）
+├─ docs/PROGRESS.md         开发进度
 ├─ bin/                     推理程序 + NapCat
 ├─ models/                  GGUF 权重（3.3 GB）
 ├─ voices/                  已保存的音色
 └─ outputs/                 生成的 wav
 ```
+
+## 运维
+
+```bash
+python botctl.py status          # 是否暂停 / OneBot 在线 / 队列忙不忙 / 记忆条数
+python botctl.py pause 30        # 急停 30 分钟，到点自动恢复
+python botctl.py pause           # 急停，不自动恢复
+python botctl.py resume          # 恢复
+python botctl.py reload          # 人设体检（改完即生效，这里只是校验）
+python botctl.py logs 50         # NapCat 日志尾部
+```
+
+**暂停是真的暂停**——`qq_send_text` / `qq_send_voice` 发送前会检查状态，命中就抛错，一条都发不出去。
+
+### 安全机制
+
+发送前要过三道闸，任一不过就拒绝：
+
+| 闸 | 作用 | 配置位置 |
+| --- | --- | --- |
+| 急停 | 全局开关，一键闭嘴 | `botctl pause` |
+| 白名单 | 只允许发给指定的人/群，**默认拒绝** | `persona.json` → `policy.allow` |
+| 频率 | 每小时上限 + 冷却时间 | `persona.json` → `voice` / `policy.text` |
+
+另外两道隐私处理：
+
+- **入站脱敏**：用户消息进模型前，手机号/身份证/银行卡/邮箱换成 `<PHONE_1>` 这类占位符，模型看不到真值
+- **出站审查**：回复发出前扫一遍，含本地路径、代码块、密钥、URL 就拦截；手机号/身份证自动遮成 `[已隐藏]`
+
+> 语音也过这两道。**语音是二次泄露通道**——文字能过滤，念出来就收不回了。
 
 ## 架构
 

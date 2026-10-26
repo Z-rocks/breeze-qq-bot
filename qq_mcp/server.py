@@ -26,6 +26,9 @@ import urllib.request
 from pathlib import Path
 
 import memory  # 同目录的 SQLite 记忆库
+import guard   # 白名单 / 急停 / 频率
+import privacy  # 入站脱敏 / 出站审查
+import lock    # TTS 串行锁
 
 ROOT = Path(os.environ.get("BREEZE_ROOT", Path(__file__).resolve().parent.parent))
 PY = os.environ.get("BREEZE_PYTHON", sys.executable)
@@ -192,26 +195,62 @@ def t_list_friends(_: dict) -> str:
     return json.dumps(rows, ensure_ascii=False, indent=2)
 
 
+def _gate(kind: str, t: str, tid: int) -> None:
+    """发送前的三道闸：急停 → 白名单 → 频率。任一不过就抛错。"""
+    paused, why = guard.is_paused()
+    if paused:
+        raise RuntimeError(why)
+    ok, why = guard.can_send(t, tid)
+    if not ok:
+        raise RuntimeError(why)
+    limits = guard.load_policy().get(kind) or {}
+    ok, why = guard.check_rate(
+        kind,
+        per_hour=limits.get("max_per_hour"),
+        cooldown_ms=int(limits.get("cooldown_ms") or 0),
+    )
+    if not ok:
+        raise RuntimeError(why)
+
+
 def t_send_text(args: dict) -> str:
     t, tid = target_of(args["target_type"], args["target_id"])
-    res = send_segments(args["target_type"], args["target_id"], [{"type": "text", "data": {"text": args["text"]}}])
+    _gate("text", t, tid)
+
+    text, issues = privacy.sanitize_outbound(args["text"])
+    if issues:
+        raise RuntimeError(f"出站审查拦截：{'、'.join(issues)}。内容里疑似含本机信息，改一改再发。")
+
+    res = send_segments(args["target_type"], args["target_id"],
+                        [{"type": "text", "data": {"text": text}}])
+    guard.record_send("text")
     memory.log_message(
         f"{t}:{tid}",
         msg_id=str(res.get("data", {}).get("message_id") or "") or None,
-        speaker_id=bot_uin(), speaker="小鲸鱼", role="bot", text=args["text"],
+        speaker_id=bot_uin(), speaker="小鲸鱼", role="bot", text=text,
     )
     return json.dumps({"message_id": res.get("data", {}).get("message_id")}, ensure_ascii=False)
 
 
 def t_send_voice(args: dict) -> str:
-    wav = synth(args["text"], args.get("instruction"), args.get("voice"), args.get("cfg_scale"))
-    res = send_record(args["target_type"], args["target_id"], wav)
     t, tid = target_of(args["target_type"], args["target_id"])
+    _gate("voice", t, tid)
+
+    text, issues = privacy.sanitize_outbound(args["text"])
+    if issues:
+        raise RuntimeError(f"出站审查拦截：{'、'.join(issues)}。语音会把内容念出来，改一改再发。")
+
+    # 8GB 显存只能跑一个实例，合成必须串行
+    with lock.exclusive("tts", timeout=300):
+        wav = synth(text, args.get("instruction"), args.get("voice"), args.get("cfg_scale"))
+
+    res = send_record(args["target_type"], args["target_id"], wav)
+    guard.record_send("voice")
     memory.log_message(
         f"{t}:{tid}",
         msg_id=str(res.get("data", {}).get("message_id") or "") or None,
         speaker_id=bot_uin(), speaker="小鲸鱼", role="bot",
-        text=f"[语音] {args['text']}",
+        text=f"[语音] {text}",
     )
     return json.dumps(
         {
@@ -258,6 +297,12 @@ def t_context(args: dict) -> str:
     related = memory.search(query, limit=6) if query else []
     seen = {(r["ts"], r["text"]) for r in recent}
     related = [r for r in related if (r["ts"], r["text"]) not in seen]
+
+    # 入站脱敏：模型只看得到占位符，真值不出本机
+    keep = {bot_uin(), str(tid), str(args["target_id"])}
+    for rows in (recent, related):
+        for r in rows:
+            r["text"], _ = privacy.redact(r["text"], keep=keep)
 
     facts = memory.get_facts("global", 20) + memory.get_facts(f"session:{session}", 10)
     return json.dumps(

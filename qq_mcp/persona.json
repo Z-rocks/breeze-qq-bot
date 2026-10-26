@@ -41,5 +41,21 @@
       "max_per_hour": 10,
       "cooldown_ms": 60000
     }
+  },
+  "policy": {
+    "owner_qq": "",
+    "allow_all_when_empty": false,
+    "allow": {
+      "private": ["1513929790"],
+      "groups": []
+    },
+    "deny": {
+      "private": [],
+      "groups": []
+    },
+    "text": {
+      "max_per_hour": 60,
+      "cooldown_ms": 0
+    }
   }
 }
