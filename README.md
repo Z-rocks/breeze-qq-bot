@@ -99,6 +99,32 @@ Breeze/
 └─ outputs/                 生成的 wav
 ```
 
+## 让机器人自己回消息
+
+默认模式是**你说话、它动手**——MCP 只是工具，没有自己的循环。要它自己回，跑 `botd.py`：
+
+```bash
+set DEEPSEEK_API_KEY=sk-xxx        # Windows
+python botd.py                     # 监听 3002，等 NapCat 推事件
+python botd.py --dry-run           # 演练：不真发，只打印打算发什么
+```
+
+链路：
+
+```
+QQ ──► NapCat ──(HTTP POST 事件)──► botd :3002 ──► DeepSeek ──► 发送
+                                        │
+                              去重 / 急停 / 白名单 / 脱敏 / 出站审查
+```
+
+**为什么用 HTTP 回调而不是 WebSocket**：NapCat 支持把事件 POST 到指定 URL，
+标准库就能接，不用为了一个 WebSocket 客户端引第三方包。
+
+需要在 NapCat 侧开一下推送：**网络配置 → HTTP客户端 → 新建**，URL 填 `http://127.0.0.1:3002`。
+
+`botd` 复用全部安全机制：白名单外不回、暂停时不回、入站先脱敏再喂模型、
+出站拦路径和密钥。语音默认 15% 概率（`persona.json` 的 `voice.probability`），合成失败自动退回文字。
+
 ## 运维
 
 ```bash
